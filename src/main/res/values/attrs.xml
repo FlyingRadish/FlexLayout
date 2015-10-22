@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="justify_content">
+        <enum name="start" value="1" />
+        <enum name="center" value="2" />
+        <enum name="end" value="3" />
+        <enum name="space_between" value="4" />
+        <enum name="space_around" value="5" />
+    </attr>
+
+    <attr name="align_content">
+        <enum name="start" value="1" />
+        <enum name="center" value="2" />
+        <enum name="end" value="3" />
+        <enum name="space_between" value="4" />
+        <enum name="space_around" value="5" />
+    </attr>
+
+    <attr name="align_item">
+        <enum name="start" value="1" />
+        <enum name="center" value="2" />
+        <enum name="end" value="3" />
+        <enum name="space_between" value="4" />
+        <enum name="space_around" value="5" />
+    </attr>
+
+    <declare-styleable name="FlexLayout">
+        <attr name="justify_content" />
+        <attr name="align_content" />
+        <attr name="align_item" />
+    </declare-styleable>
+</resources>
