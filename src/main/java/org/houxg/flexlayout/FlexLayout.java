@@ -18,7 +18,7 @@ import android.view.ViewGroup;
 public class FlexLayout extends ViewGroup {
     int[] rowHeights = new int[32];
     int[] rowWidths = new int[32];
-    int[] culoumCounts = new int[32];
+    int[] columnCounts = new int[32];
     int totalHeight;
 
     public FlexLayout(Context context) {
@@ -33,9 +33,15 @@ public class FlexLayout extends ViewGroup {
         alignItemMode = typedArray.getInt(R.styleable.FlexLayout_align_item, START);
     }
 
+//    @Override
+//    protected LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+//
+//        return new LayoutParams(p.width, p.height);
+//    }
+
     @Override
-    protected LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
-        return new LayoutParams(p.width, p.height);
+    public ViewGroup.LayoutParams generateLayoutParams(AttributeSet attrs) {
+        return new LayoutParams(getContext(), attrs);
     }
 
     @Override
@@ -64,33 +70,33 @@ public class FlexLayout extends ViewGroup {
         int maxRowHeight = 0;
         int count = getChildCount();
         int rowId = 0;
-        int coulumCount = 0;
+        int columnCount = 0;
         for (int i = 0; i < count; i++) {
             View child = getChildAt(i);
-            int childWid = child.getMeasuredWidth();
-            int childHei = child.getMeasuredHeight();
+            LayoutParams params = (LayoutParams) child.getLayoutParams();
+            int childWid = child.getMeasuredWidth() + params.leftMargin + params.rightMargin;
+            int childHei = child.getMeasuredHeight() + params.topMargin + params.bottomMargin;
             rowWid += childWid;
             //如果宽度不够了，而且该行已经有至少一个元素则换行
-            if (rowWid > width && coulumCount > 0) {
+            if (rowWid > width && columnCount > 0) {
                 //记录该行信息
                 rowHeights[rowId] = maxRowHeight;
                 rowWidths[rowId] = rowWid - childWid;
-                culoumCounts[rowId] = coulumCount;
-                coulumCount = 0;
+                columnCounts[rowId] = columnCount;
+                columnCount = 0;
                 rowId++;
                 //换行
                 rowWid = childWid;
                 height += maxRowHeight;
                 maxRowHeight = childHei;
             }
-            coulumCount++;
+            columnCount++;
             maxRowHeight = childHei >= maxRowHeight ? childHei : maxRowHeight;
-            LayoutParams params = (LayoutParams) child.getLayoutParams();
             params.rowId = rowId;
         }
         rowHeights[rowId] = maxRowHeight;
         rowWidths[rowId] = rowWid;
-        culoumCounts[rowId] = coulumCount;
+        columnCounts[rowId] = columnCount;
         height += maxRowHeight;
         totalHeight = height;
 
@@ -161,13 +167,13 @@ public class FlexLayout extends ViewGroup {
                         break;
                     case SPACE_BETWEEN:
                         left = 0;
-                        if (getMeasuredWidth() > rowWidths[nowRow] && culoumCounts[nowRow] > 1) {
-                            justifyDiv = (getMeasuredWidth() - rowWidths[nowRow]) / (culoumCounts[nowRow] - 1);
+                        if (getMeasuredWidth() > rowWidths[nowRow] && columnCounts[nowRow] > 1) {
+                            justifyDiv = (getMeasuredWidth() - rowWidths[nowRow]) / (columnCounts[nowRow] - 1);
                         }
                         break;
                     case SPACE_AROUND:
                         if (getMeasuredWidth() > rowWidths[nowRow]) {
-                            justifyDiv = (getMeasuredWidth() - rowWidths[nowRow]) / culoumCounts[nowRow];
+                            justifyDiv = (getMeasuredWidth() - rowWidths[nowRow]) / columnCounts[nowRow];
                             left = justifyDiv / 2;
                         }
                         break;
@@ -187,8 +193,10 @@ public class FlexLayout extends ViewGroup {
                     //需要伸缩子项，将所有高度都为最大高度
                     break;
             }
+            top += params.topMargin;
+            left += params.leftMargin;
             child.layout(left, top, left + childWid, top + childHei);
-            left += childWid + justifyDiv;
+            left += childWid + justifyDiv + params.rightMargin;
         }
     }
 
@@ -204,7 +212,7 @@ public class FlexLayout extends ViewGroup {
     int alignContentMode = START;
 
 
-    static class LayoutParams extends ViewGroup.LayoutParams {
+    static class LayoutParams extends ViewGroup.MarginLayoutParams {
         //TODO:缩放系数
 
         int rowId = 0;
