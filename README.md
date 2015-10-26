@@ -10,21 +10,19 @@ flex layout in Android!
 
 ##Example
 ###Flex
-![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/flex.jpg)
-
-![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/flex2.jpg)
-
+![](https://raw.githubusercontent.com/houxg/ScreenShot/master/FlexLayout/flex.jpg)
+---
 ###Justify center
-![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/justify_center.jpg)
-
+![](https://raw.githubusercontent.com/houxg/ScreenShot/master/FlexLayout/justify_center.jpg)
+---
 ###Align item center
-![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/align_item_center.jpg)
-
+![](https://raw.githubusercontent.com/houxg/ScreenShot/master/FlexLayout/align_item_center.jpg)
+---
 ###Justify space between
-![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/justify_space_between.jpg)
-
+![](https://raw.githubusercontent.com/houxg/ScreenShot/master/FlexLayout/justify_space_between.jpg)
+---
 ###Justify space around
-![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/justify_space_around.jpg)
+![](https://raw.githubusercontent.com/houxg/ScreenShot/master/FlexLayout/justify_space_around.jpg)
 ##Useage
 ```
   <org.houxg.flexlayout.FlexLayout
