@@ -15,7 +15,6 @@ import android.view.ViewGroup;
  */
 
 // TODO: 2015/10/22 横纵
-// TODO: 2015/10/23 加入行间距设置
 // TODO: 2015/10/23 BASE_LINE
 public class FlexLayout extends ViewGroup {
     static final int START = 1;
