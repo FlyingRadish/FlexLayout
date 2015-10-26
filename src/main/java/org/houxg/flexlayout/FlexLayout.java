@@ -14,12 +14,27 @@ import android.view.ViewGroup;
  * create on 2015/10/21
  */
 
-// TODO: 2015/10/22 横纵，主轴/侧轴对齐方式，换行/不换行
+// TODO: 2015/10/22 横纵
+// TODO: 2015/10/23 加入行间距设置
+// TODO: 2015/10/23 BASE_LINE
 public class FlexLayout extends ViewGroup {
+    static final int START = 1;
+    static final int CENTER = 2;
+    static final int END = 3;
+    static final int SPACE_BETWEEN = 4;
+    static final int SPACE_AROUND = 5;
+    static final int STRETCH = 6;
+    static final int BASE_LINE = 7;
     int[] rowHeights = new int[32];
     int[] rowWidths = new int[32];
     int[] columnCounts = new int[32];
     int totalHeight;
+
+    int justifyContentMode = START;
+    int alignItemMode = START;
+    int alignContentMode = START;
+    int itemDiv = 0;
+    int rowDiv = 0;
 
     public FlexLayout(Context context) {
         super(context);
@@ -31,13 +46,16 @@ public class FlexLayout extends ViewGroup {
         justifyContentMode = typedArray.getInt(R.styleable.FlexLayout_justify_content, START);
         alignContentMode = typedArray.getInt(R.styleable.FlexLayout_align_content, START);
         alignItemMode = typedArray.getInt(R.styleable.FlexLayout_align_item, START);
+        itemDiv = (int) typedArray.getDimension(R.styleable.FlexLayout_itemDividerWidth, 0);
+        rowDiv = (int) typedArray.getDimension(R.styleable.FlexLayout_rowDividerHeight, 0);
+        if (SPACE_AROUND == justifyContentMode || SPACE_BETWEEN == justifyContentMode) {
+            itemDiv = 0;
+        }
+        if (SPACE_AROUND == alignContentMode || SPACE_BETWEEN == alignContentMode) {
+            rowDiv = 0;
+        }
+        typedArray.recycle();
     }
-
-//    @Override
-//    protected LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
-//
-//        return new LayoutParams(p.width, p.height);
-//    }
 
     @Override
     public ViewGroup.LayoutParams generateLayoutParams(AttributeSet attrs) {
@@ -62,8 +80,6 @@ public class FlexLayout extends ViewGroup {
         int width = widthSize;
         int height = 0;
         //让子View都做一遍测量
-        // TODO: 2015/10/22 考虑margin因素
-        // TODO: 2015/10/22 加入缩放参数
         measureChildren(widthMeasureSpec, heightMeasureSpec);
 
         int rowWid = 0;
@@ -77,19 +93,22 @@ public class FlexLayout extends ViewGroup {
             int childWid = child.getMeasuredWidth() + params.leftMargin + params.rightMargin;
             int childHei = child.getMeasuredHeight() + params.topMargin + params.bottomMargin;
             rowWid += childWid;
-            //如果宽度不够了，而且该行已经有至少一个元素则换行
+            //如果宽度不够而且该行已经有至少一个元素则换行
             if (rowWid > width && columnCount > 0) {
-                //记录该行信息
+                //记录该行信息,稍后layout的时候会用到
+//                maxRowHeight += rowDiv;
                 rowHeights[rowId] = maxRowHeight;
-                rowWidths[rowId] = rowWid - childWid;
+                rowWidths[rowId] = rowWid - childWid - itemDiv;  //去掉最后一个item的div
                 columnCounts[rowId] = columnCount;
                 columnCount = 0;
                 rowId++;
                 //换行
                 rowWid = childWid;
-                height += maxRowHeight;
+                height += maxRowHeight + rowDiv;
                 maxRowHeight = childHei;
             }
+            //当该行足够放置元素时，才加上itemDiv
+            rowWid += itemDiv;
             columnCount++;
             maxRowHeight = childHei >= maxRowHeight ? childHei : maxRowHeight;
             params.rowId = rowId;
@@ -113,12 +132,16 @@ public class FlexLayout extends ViewGroup {
         int alignDiv = 0;
 
         int count = getChildCount();
+        if (count <= 0) {
+            return;
+        }
         int baseTop = 0;
-        int left = 0;
+        int baseLeft = 0;
         int nowRow = -1;
         boolean isHeightEnough = getMeasuredHeight() > totalHeight;
         LayoutParams lastViewParams = (LayoutParams) getChildAt(getChildCount() - 1).getLayoutParams();
         int rowCount = lastViewParams.rowId + 1;
+        //计算Top起始位置
         switch (alignContentMode) {
             case CENTER:
                 if (isHeightEnough) {
@@ -138,35 +161,35 @@ public class FlexLayout extends ViewGroup {
             case SPACE_AROUND:
                 if (isHeightEnough) {
                     alignDiv = (getMeasuredHeight() - totalHeight) / rowCount;
-                    baseTop = alignDiv / 2;
+                    baseTop = alignDiv >> 1;
                 }
                 break;
         }
         for (int i = 0; i < count; i++) {
             View child = getChildAt(i);
-            int top = baseTop;
             int childHei = child.getMeasuredHeight();
             int childWid = child.getMeasuredWidth();
             LayoutParams params = (LayoutParams) child.getLayoutParams();
+            //换行时，更新参数
             if (nowRow != params.rowId) {
                 if (nowRow >= 0) {
-                    baseTop += rowHeights[nowRow] + alignDiv;
+                    baseTop += rowHeights[nowRow] + alignDiv + rowDiv;
                 }
                 nowRow = params.rowId;
                 justifyDiv = 0;
-                //计算left起始点
+                //计算left起始位置
                 switch (justifyContentMode) {
                     case START:
-                        left = 0;
+                        baseLeft = 0;
                         break;
                     case CENTER:
-                        left = (getMeasuredWidth() - rowWidths[nowRow]) / 2;
+                        baseLeft = (getMeasuredWidth() - rowWidths[nowRow]) >> 1;
                         break;
                     case END:
-                        left = getMeasuredWidth() - rowWidths[nowRow];
+                        baseLeft = getMeasuredWidth() - rowWidths[nowRow];
                         break;
                     case SPACE_BETWEEN:
-                        left = 0;
+                        baseLeft = 0;
                         if (getMeasuredWidth() > rowWidths[nowRow] && columnCounts[nowRow] > 1) {
                             justifyDiv = (getMeasuredWidth() - rowWidths[nowRow]) / (columnCounts[nowRow] - 1);
                         }
@@ -174,46 +197,26 @@ public class FlexLayout extends ViewGroup {
                     case SPACE_AROUND:
                         if (getMeasuredWidth() > rowWidths[nowRow]) {
                             justifyDiv = (getMeasuredWidth() - rowWidths[nowRow]) / columnCounts[nowRow];
-                            left = justifyDiv / 2;
+                            baseLeft = justifyDiv >> 1;
                         }
                         break;
                 }
             }
-            switch (alignItemMode) {
-                case START:
-                    top = baseTop;
-                    break;
-                case CENTER:
-                    top = baseTop + (rowHeights[params.rowId] - childHei) / 2;
-                    break;
-                case END:
-                    top = baseTop + rowHeights[params.rowId] - childHei;
-                    break;
-                case STRETCH:
-                    //需要伸缩子项，将所有高度都为最大高度
-                    break;
+            int top = baseTop;
+            if (CENTER == alignItemMode) {
+                top += (rowHeights[params.rowId] - childHei) >> 1;
+            } else if (END == alignItemMode) {
+                top += rowHeights[params.rowId] - childHei - params.topMargin;
+            } else {
+                top += params.topMargin;
             }
-            top += params.topMargin;
-            left += params.leftMargin;
-            child.layout(left, top, left + childWid, top + childHei);
-            left += childWid + justifyDiv + params.rightMargin;
+            baseLeft += params.leftMargin;
+            child.layout(baseLeft, top, baseLeft + childWid, top + childHei);
+            baseLeft += childWid + justifyDiv + itemDiv + params.rightMargin;
         }
     }
 
-    final int START = 1;
-    final int CENTER = 2;
-    final int END = 3;
-    final int SPACE_BETWEEN = 4;
-    final int SPACE_AROUND = 5;
-    final int STRETCH = 6;
-    final int BASE_LINE = 7;
-    int justifyContentMode = START;
-    int alignItemMode = START;
-    int alignContentMode = START;
-
-
     static class LayoutParams extends ViewGroup.MarginLayoutParams {
-        //TODO:缩放系数
 
         int rowId = 0;
 

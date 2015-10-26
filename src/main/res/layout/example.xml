@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <org.houxg.flexlayout.FlexLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:background="#000"
+        app:align_item="center"
+        app:itemDividerWidth="5dp"
+        app:justify_content="start"
+        app:rowDividerHeight="5dp"
+        app:align_content="space_between">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#526"
+            android:text="item 1"
+            android:textColor="#fff" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_margin="5dp"
+            android:background="#586"
+            android:text="item 2"
+            android:textColor="#fff" />
+
+        <TextView
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:background="#986"
+            android:text="item 3"
+            android:textColor="#fff" />
+
+        <TextView
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="#966"
+            android:text="item 4"
+            android:textColor="#fff" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#526"
+            android:text="item 1"
+            android:textColor="#fff" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="#986"
+            android:text="item 5"
+            android:textColor="#fff" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="#986"
+            android:text="item 5"
+            android:textColor="#fff" />
+
+    </org.houxg.flexlayout.FlexLayout>
+
+</LinearLayout>

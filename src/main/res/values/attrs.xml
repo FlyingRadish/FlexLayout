@@ -24,9 +24,16 @@
         <enum name="space_around" value="5" />
     </attr>
 
+    <attr name="orientation">
+        <enum name="horizontal" value="1" />
+        <enum name="vertical" value="2" />
+    </attr>
+
     <declare-styleable name="FlexLayout">
         <attr name="justify_content" />
         <attr name="align_content" />
         <attr name="align_item" />
+        <attr name="rowDividerHeight" format="dimension" />
+        <attr name="itemDividerWidth" format="dimension" />
     </declare-styleable>
 </resources>
