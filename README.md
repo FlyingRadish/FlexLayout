@@ -1,16 +1,31 @@
 # FlexLayout
 flex layout in Android!
 
-###attrs:
----
+##Attrs
 - justify-content
 - align-content
 - align-item
 - rowDividerHeight
 - itemDividerWidth
 
-###Example
----
+##Example
+###Flex
+![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/flex.png)
+
+![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/flex2.png)
+
+###Justify center
+![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/justify_center.png)
+
+###Align item center
+![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/align_item_center.png)
+
+###Justify space between
+![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/justify_space_between.png)
+
+###Justify space around
+![](https://raw.githubusercontent.com/houxg/FlexLayout/master/screenshot/justify_space_around.png)
+##Useage
 ```
   <org.houxg.flexlayout.FlexLayout
         android:layout_width="match_parent"
