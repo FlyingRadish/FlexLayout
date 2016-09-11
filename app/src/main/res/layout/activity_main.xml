@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
@@ -7,27 +7,104 @@
     android:layout_height="match_parent"
     tools:context="org.houxg.flexlayoutdemo.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:orientation="vertical"
+        android:padding="4dp">
 
-    <org.houxg.flexlayout.FlexLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-        <Button
-            android:layout_width="150dp"
-            android:layout_height="30dp" />
-        <Button
-            android:layout_width="150dp"
-            android:layout_height="30dp" />
-        <Button
-            android:layout_width="150dp"
-            android:layout_height="30dp" />
-        <Button
-            android:layout_width="150dp"
-            android:layout_height="30dp" />
+        <org.houxg.flexlayout.FlexLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    </org.houxg.flexlayout.FlexLayout>
+            <LinearLayout
+                android:id="@+id/ll_justify_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-</RelativeLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="justify_content" />
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_align_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="align_content" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_align_item"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="align_item" />
+
+
+            </LinearLayout>
+
+        </org.houxg.flexlayout.FlexLayout>
+
+        <org.houxg.flexlayout.FlexLayout
+            android:id="@+id/layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#aaa"
+            app:row_gap="56dp">
+
+            <Button
+                android:layout_width="123dp"
+                android:layout_height="30dp" />
+
+            <Button
+                android:layout_width="150dp"
+                android:layout_height="80dp" />
+
+            <Button
+                android:layout_width="250dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="12dp" />
+
+            <Button
+                android:layout_width="50dp"
+                android:layout_height="30dp" />
+
+            <Button
+                android:layout_width="50dp"
+                android:layout_height="30dp" />
+
+            <Button
+                android:layout_width="50dp"
+                android:layout_height="80dp" />
+
+            <Button
+                android:layout_width="50dp"
+                android:layout_height="20dp" />
+
+            <Button
+                android:layout_width="70dp"
+                android:layout_height="30dp" />
+
+            <Button
+                android:layout_width="50dp"
+                android:layout_height="90dp" />
+
+        </org.houxg.flexlayout.FlexLayout>
+
+    </LinearLayout>
+</ScrollView>
