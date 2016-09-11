@@ -1,12 +1,31 @@
 # FlexLayout
 flex layout in Android!
 
+##Usage
+- Step 1
+  Add these to your project's build.gradle
+```
+allprojects {
+		repositories {
+			...
+			maven { url "https://jitpack.io" }
+		}
+	}
+```
+- Step 2
+  Add dependency
+```
+dependencies {
+		compile 'com.github.houxg:FlexLayout:1.2'
+	}
+```
+
 ##Attrs
 - justify-content
 - align-content
 - align-item
-- rowDividerHeight
-- itemDividerWidth
+- rowGap
+- colGap
 
 ##Example
 ###Flex
@@ -23,18 +42,3 @@ flex layout in Android!
 ---
 ###Justify space around
 ![](https://raw.githubusercontent.com/houxg/ScreenShot/master/FlexLayout/justify_space_around.jpg)
-##Useage
-```
-  <org.houxg.flexlayout.FlexLayout
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        app:align_item="center"
-        app:itemDividerWidth="5dp"
-        app:justify_content="start"
-        app:rowDividerHeight="5dp"
-        app:align_content="space_between">
-
-　　　　...views that you want to be flex...
-
-   </org.houxg.flexlayout.FlexLayout>
-```
