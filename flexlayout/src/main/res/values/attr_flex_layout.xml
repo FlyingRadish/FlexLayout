@@ -33,7 +33,7 @@
         <attr name="justify_content" />
         <attr name="align_content" />
         <attr name="align_item" />
-        <attr name="rowDividerHeight" format="dimension" />
-        <attr name="itemDividerWidth" format="dimension" />
+        <attr name="row_gap" format="dimension" />
+        <attr name="col_gap" format="dimension" />
     </declare-styleable>
 </resources>

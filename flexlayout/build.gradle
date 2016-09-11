@@ -5,13 +5,13 @@ group = 'com.github.houxg'
 
 android {
     compileSdkVersion 22
-    buildToolsVersion "24.0.1"
+    buildToolsVersion '24.0.2'
 
     defaultConfig {
         minSdkVersion 17
         targetSdkVersion 22
-        versionCode 2
-        versionName "1.1"
+        versionCode 3
+        versionName "1.2"
 
     }
     buildTypes {

@@ -6,24 +6,24 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class FlexLayout extends ViewGroup {
-    static final int START = 1;
-    static final int CENTER = 2;
-    static final int END = 3;
-    static final int SPACE_BETWEEN = 4;
-    static final int SPACE_AROUND = 5;
-    static final int STRETCH = 6;   //FIXME:wait to implement
-    static final int BASE_LINE = 7; //FIXME:wait to implement
-    int[] rowHeights = new int[32];
-    int[] rowWidths = new int[32];
-    int[] columnCounts = new int[32];
-    int totalHeight;
+import java.util.ArrayList;
+import java.util.List;
 
-    int justifyContentMode = START;
-    int alignItemMode = START;
-    int alignContentMode = START;
-    int itemDiv = 0;
-    int rowDiv = 0;
+public class FlexLayout extends ViewGroup {
+
+    private static final int DEFAULT_CAPACITY = 32;
+
+    private List<Integer> mRowHeights = new ArrayList<>(DEFAULT_CAPACITY);
+    private List<Integer> mRowWidths = new ArrayList<>(DEFAULT_CAPACITY);
+    private List<Integer> mColumnCounts = new ArrayList<>(DEFAULT_CAPACITY);
+    private int mTotalHeight;
+
+    private Mode mJustifyContentMode = Mode.START;
+    private Mode mAlignItemMode = Mode.START;
+    private Mode mAlignContentMode = Mode.START;
+    private int mColGap = 0;
+    private int mRowGap = 0;
+    private RowSpec mRowSpec = new RowSpec();
 
     public FlexLayout(Context context) {
         super(context);
@@ -32,17 +32,11 @@ public class FlexLayout extends ViewGroup {
     public FlexLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.FlexLayout);
-        justifyContentMode = typedArray.getInt(R.styleable.FlexLayout_justify_content, START);
-        alignContentMode = typedArray.getInt(R.styleable.FlexLayout_align_content, START);
-        alignItemMode = typedArray.getInt(R.styleable.FlexLayout_align_item, START);
-        itemDiv = (int) typedArray.getDimension(R.styleable.FlexLayout_itemDividerWidth, 0);
-        rowDiv = (int) typedArray.getDimension(R.styleable.FlexLayout_rowDividerHeight, 0);
-        if (SPACE_AROUND == justifyContentMode || SPACE_BETWEEN == justifyContentMode) {
-            itemDiv = 0;
-        }
-        if (SPACE_AROUND == alignContentMode || SPACE_BETWEEN == alignContentMode) {
-            rowDiv = 0;
-        }
+        mJustifyContentMode = Mode.valueOf(typedArray.getInt(R.styleable.FlexLayout_justify_content, Mode.START.mVal));
+        mAlignContentMode = Mode.valueOf(typedArray.getInt(R.styleable.FlexLayout_align_content, Mode.START.mVal));
+        mAlignItemMode = Mode.valueOf(typedArray.getInt(R.styleable.FlexLayout_align_item, Mode.START.mVal));
+        mColGap = (int) typedArray.getDimension(R.styleable.FlexLayout_col_gap, 0);
+        mRowGap = (int) typedArray.getDimension(R.styleable.FlexLayout_row_gap, 0);
         typedArray.recycle();
     }
 
@@ -59,54 +53,82 @@ public class FlexLayout extends ViewGroup {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         final int widthSize = MeasureSpec.getSize(widthMeasureSpec);
         final int heightSize = MeasureSpec.getSize(heightMeasureSpec);
 
+        mRowWidths.clear();
+        mRowHeights.clear();
+        mColumnCounts.clear();
+        mRowSpec.reset();
+        mRowSpec.setAvailableWidth(widthSize - getPaddingRight() + getPaddingLeft());
+        int rowGap = getRowGapBaseOnCurrentSatate();
+        int colGap = getColGapBaseOnCurrentSatate();
 
-        int width = widthSize;
-        int height = 0;
         measureChildren(widthMeasureSpec, heightMeasureSpec);
-
-        int rowWid = 0;
-        int maxRowHeight = 0;
         int count = getChildCount();
-        int rowId = 0;
-        int columnCount = 0;
+        for (int i = 0; i < count; i++) {
+            View child = getChildAt(i);
+            LayoutParams params = (LayoutParams) child.getLayoutParams();
+            if (child.getVisibility() == View.GONE) {
+                continue;
+            }
+            child.measure(getChildMeasureSpec(params.width, widthMeasureSpec),
+                    getChildMeasureSpec(params.height, heightMeasureSpec));
+        }
+
+        int rowCount = 0;
+        mTotalHeight = getPaddingTop() + getPaddingBottom();
         for (int i = 0; i < count; i++) {
             View child = getChildAt(i);
             LayoutParams params = (LayoutParams) child.getLayoutParams();
             int childWid = child.getMeasuredWidth() + params.leftMargin + params.rightMargin;
             int childHei = child.getMeasuredHeight() + params.topMargin + params.bottomMargin;
-            rowWid += childWid;
-            if (rowWid > width && columnCount > 0) {
-//                maxRowHeight += rowDiv;
-                rowHeights[rowId] = maxRowHeight;
-                rowWidths[rowId] = rowWid - childWid - itemDiv;
-                columnCounts[rowId] = columnCount;
-                columnCount = 0;
-                rowId++;
-
-                rowWid = childWid;
-                height += maxRowHeight + rowDiv;
-                maxRowHeight = childHei;
+            if (!mRowSpec.addItem(childWid, childHei, colGap)) {
+                mRowWidths.add(mRowSpec.getRowWidth());
+                mRowHeights.add(mRowSpec.getRowHeight());
+                mColumnCounts.add(mRowSpec.getColumnCount());
+                mTotalHeight += mRowSpec.getRowHeight() + rowGap;
+                mRowSpec.reset();
+                rowCount++;
+                mRowSpec.forceAddItem(childWid, childHei);
             }
-            rowWid += itemDiv;
-            columnCount++;
-            maxRowHeight = childHei >= maxRowHeight ? childHei : maxRowHeight;
-            params.rowId = rowId;
+            params.rowId = rowCount;
         }
-        rowHeights[rowId] = maxRowHeight;
-        rowWidths[rowId] = rowWid;
-        columnCounts[rowId] = columnCount;
-        height += maxRowHeight;
-        totalHeight = height;
-
+        if (mRowWidths.size() != rowCount + 1) {
+            mRowWidths.add(mRowSpec.getRowWidth());
+            mRowHeights.add(mRowSpec.getRowHeight());
+            mColumnCounts.add(mRowSpec.getColumnCount());
+            mTotalHeight += mRowSpec.getRowHeight();
+        }
+        int height;
         if (heightMode == MeasureSpec.EXACTLY) {
             height = heightSize;
+        } else {
+            height = mTotalHeight;
         }
-        setMeasuredDimension(width, height);
+        setMeasuredDimension(widthSize, height);
+    }
+
+    private int getChildMeasureSpec(int childParam, int parentSpec) {
+        int parentSize = MeasureSpec.getSize(parentSpec) - getPaddingLeft() - getPaddingRight();
+        int resultMode;
+        int resultSize;
+        if (childParam == ViewGroup.LayoutParams.WRAP_CONTENT) {
+            resultMode = MeasureSpec.AT_MOST;
+            resultSize = parentSize;
+        } else if (childParam == ViewGroup.LayoutParams.MATCH_PARENT) {
+            resultMode = MeasureSpec.EXACTLY;
+            resultSize = parentSize;
+        } else {
+            resultMode = MeasureSpec.EXACTLY;
+            if (childParam < 0 || parentSize < childParam) {
+                resultSize = parentSize;
+            } else {
+                resultSize = childParam;
+            }
+        }
+        return MeasureSpec.makeMeasureSpec(resultSize, resultMode);
     }
 
     @Override
@@ -118,31 +140,33 @@ public class FlexLayout extends ViewGroup {
         if (count <= 0) {
             return;
         }
-        int baseTop = 0;
-        int baseLeft = 0;
+        int baseTop = getPaddingTop();
+        int baseLeft = getPaddingLeft();
         int nowRow = -1;
-        boolean isHeightEnough = getMeasuredHeight() > totalHeight;
+        boolean isHeightEnough = getMeasuredHeight() > mTotalHeight;
         LayoutParams lastViewParams = (LayoutParams) getChildAt(getChildCount() - 1).getLayoutParams();
         int rowCount = lastViewParams.rowId + 1;
-        switch (alignContentMode) {
+        int rowGap = getRowGapBaseOnCurrentSatate();
+        int colGap = getColGapBaseOnCurrentSatate();
+        switch (mAlignContentMode) {
             case CENTER:
                 if (isHeightEnough) {
-                    baseTop = (getMeasuredHeight() - totalHeight) >> 1;
+                    baseTop = (getMeasuredHeight() - mTotalHeight) >> 1;
                 }
                 break;
             case END:
                 if (isHeightEnough) {
-                    baseTop = getMeasuredHeight() - totalHeight;
+                    baseTop = getMeasuredHeight() - mTotalHeight;
                 }
                 break;
             case SPACE_BETWEEN:
                 if (isHeightEnough && rowCount > 1) {
-                    alignDiv = (getMeasuredHeight() - totalHeight) / (rowCount - 1);
+                    alignDiv = (getMeasuredHeight() - mTotalHeight) / (rowCount - 1);
                 }
                 break;
             case SPACE_AROUND:
                 if (isHeightEnough) {
-                    alignDiv = (getMeasuredHeight() - totalHeight) / rowCount;
+                    alignDiv = (getMeasuredHeight() - mTotalHeight) / rowCount;
                     baseTop = alignDiv >> 1;
                 }
                 break;
@@ -154,51 +178,115 @@ public class FlexLayout extends ViewGroup {
             LayoutParams params = (LayoutParams) child.getLayoutParams();
             if (nowRow != params.rowId) {
                 if (nowRow >= 0) {
-                    baseTop += rowHeights[nowRow] + alignDiv + rowDiv;
+                    baseTop += mRowHeights.get(nowRow) + alignDiv + rowGap;
                 }
                 nowRow = params.rowId;
                 justifyDiv = 0;
-                switch (justifyContentMode) {
+                switch (mJustifyContentMode) {
                     case START:
-                        baseLeft = 0;
+                        baseLeft = getPaddingLeft();
                         break;
                     case CENTER:
-                        baseLeft = (getMeasuredWidth() - rowWidths[nowRow]) >> 1;
+                        baseLeft = (getMeasuredWidth() - mRowWidths.get(nowRow)) >> 1 + getPaddingLeft();
                         break;
                     case END:
-                        baseLeft = getMeasuredWidth() - rowWidths[nowRow];
+                        baseLeft = getMeasuredWidth() - mRowWidths.get(nowRow) + getPaddingLeft();
                         break;
                     case SPACE_BETWEEN:
-                        baseLeft = 0;
-                        if (getMeasuredWidth() > rowWidths[nowRow] && columnCounts[nowRow] > 1) {
-                            justifyDiv = (getMeasuredWidth() - rowWidths[nowRow]) / (columnCounts[nowRow] - 1);
+                        baseLeft = getPaddingLeft();
+                        if (getMeasuredWidth() > mRowWidths.get(nowRow) && mColumnCounts.get(nowRow) > 1) {
+                            justifyDiv = (getMeasuredWidth() - mRowWidths.get(nowRow)) / (mColumnCounts.get(nowRow) - 1);
                         }
                         break;
                     case SPACE_AROUND:
-                        if (getMeasuredWidth() > rowWidths[nowRow]) {
-                            justifyDiv = (getMeasuredWidth() - rowWidths[nowRow]) / columnCounts[nowRow];
-                            baseLeft = justifyDiv >> 1;
+                        if (getMeasuredWidth() > mRowWidths.get(nowRow)) {
+                            justifyDiv = (getMeasuredWidth() - mRowWidths.get(nowRow)) / mColumnCounts.get(nowRow);
+                            baseLeft = justifyDiv >> 1 + getPaddingLeft();
                         }
                         break;
                 }
             }
             int top = baseTop;
-            if (CENTER == alignItemMode) {
-                top += (rowHeights[params.rowId] - childHei) >> 1;
-            } else if (END == alignItemMode) {
-                top += rowHeights[params.rowId] - childHei - params.topMargin;
+            if (Mode.CENTER == mAlignItemMode) {
+                top += (mRowHeights.get(params.rowId) - childHei) >> 1;
+            } else if (Mode.END == mAlignItemMode) {
+                top += mRowHeights.get(params.rowId) - childHei - params.topMargin;
             } else {
                 top += params.topMargin;
             }
             baseLeft += params.leftMargin;
             child.layout(baseLeft, top, baseLeft + childWid, top + childHei);
-            baseLeft += childWid + justifyDiv + itemDiv + params.rightMargin;
+            baseLeft += childWid + justifyDiv + colGap + params.rightMargin;
         }
     }
 
-    static class LayoutParams extends ViewGroup.MarginLayoutParams {
+    private int getRowGapBaseOnCurrentSatate() {
+        if (Mode.SPACE_AROUND == mAlignContentMode || Mode.SPACE_BETWEEN == mAlignContentMode) {
+            return 0;
+        }
+        return mRowGap;
+    }
 
-        int rowId = 0;
+    private int getColGapBaseOnCurrentSatate() {
+        if (Mode.SPACE_AROUND == mAlignContentMode || Mode.SPACE_BETWEEN == mAlignContentMode) {
+            return 0;
+        }
+        return mRowGap;
+    }
+
+    public void setJustifyContent(Mode justifyContent) {
+        this.mJustifyContentMode = justifyContent;
+        requestLayout();
+    }
+
+    public void setAlignItem(Mode alignItem) {
+        if (alignItem != Mode.START
+                && alignItem != Mode.CENTER
+                && alignItem != Mode.END) {
+            alignItem = Mode.START;
+        }
+        this.mAlignItemMode = alignItem;
+        requestLayout();
+    }
+
+    public void setAlignContent(Mode alignContent) {
+        this.mAlignContentMode = alignContent;
+        requestLayout();
+    }
+
+    public void setColGap(int colGap) {
+        mColGap = colGap;
+        requestLayout();
+    }
+
+    public void setRowGap(int rowGap) {
+        mRowGap = rowGap;
+        requestLayout();
+    }
+
+    public int getColGap() {
+        return mColGap;
+    }
+
+    public int getRowGap() {
+        return mRowGap;
+    }
+
+    public Mode getJustifyContent() {
+        return mJustifyContentMode;
+    }
+
+    public Mode getAlignItem() {
+        return mAlignItemMode;
+    }
+
+    public Mode getAlignContent() {
+        return mAlignContentMode;
+    }
+
+    public static class LayoutParams extends ViewGroup.MarginLayoutParams {
+
+        private int rowId = 0;
 
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
@@ -210,6 +298,101 @@ public class FlexLayout extends ViewGroup {
 
         public LayoutParams(ViewGroup.LayoutParams source) {
             super(source);
+        }
+    }
+
+    public enum Mode {
+        START(1),
+        CENTER(2),
+        END(3),
+        SPACE_BETWEEN(4),
+        SPACE_AROUND(5);
+
+        private int mVal;
+
+        Mode(int val) {
+            mVal = val;
+        }
+
+        public static Mode valueOf(int mode) {
+            switch (mode) {
+                case 2:
+                    return CENTER;
+                case 3:
+                    return END;
+                case 4:
+                    return SPACE_BETWEEN;
+                case 5:
+                    return SPACE_AROUND;
+                case 1:
+                default:
+                    return START;
+            }
+        }
+
+    }
+
+    private static class RowSpec {
+        int rowHeight;
+        int rowWidth;
+        int columnCount;
+        int availableWidth;
+
+        public void setAvailableWidth(int availableWidth) {
+            this.availableWidth = availableWidth;
+        }
+
+        public void reset() {
+            rowHeight = 0;
+            rowWidth = 0;
+            columnCount = 0;
+        }
+
+        public boolean addItem(int width, int height) {
+            int tempWidth = rowWidth + width;
+            if (tempWidth > availableWidth) {
+                return false;
+            } else {
+                rowWidth = tempWidth;
+                columnCount++;
+                rowHeight = Math.max(rowHeight, height);
+                return true;
+            }
+        }
+
+        public void forceAddItem(int width, int height) {
+            rowWidth += width;
+            columnCount++;
+            rowHeight = Math.max(rowHeight, height);
+        }
+
+        public boolean addItem(int width, int height, int colGap) {
+            int tempWidth;
+            if (columnCount == 0) {
+                tempWidth = rowWidth + width;
+            } else {
+                tempWidth = rowWidth + width + colGap;
+            }
+            if (tempWidth > availableWidth) {
+                return false;
+            } else {
+                rowWidth = tempWidth;
+                columnCount++;
+                rowHeight = Math.max(rowHeight, height);
+                return true;
+            }
+        }
+
+        public int getRowHeight() {
+            return rowHeight;
+        }
+
+        public int getRowWidth() {
+            return rowWidth;
+        }
+
+        public int getColumnCount() {
+            return columnCount;
         }
     }
 }
